@@ -151,90 +151,6 @@ void Widget::on_pushButtondel_clicked()
 }
 
 
-void Widget::on_pushButtonequal_clicked()
-{
-        QStack<int> s_num, s_opt;  //模板类存为int
-
-        char opt[128] = {0};
-        int i = 0, tmp = 0, num1, num2;
-
-        //把QString转换成char *
-        QByteArray ba;
-        ba.append(exp);   //把QString转换成QByteArray
-        strcpy(opt, ba.data());  //data可以把QByteArray转换成const char *
-
-        while (opt[i] != '\0' || s_opt.empty() != true)
-        {
-            if (opt[i] >= '0' && opt[i] <= '9')
-            {
-                tmp = tmp * 10 + opt[i] - '0';
-                i++;
-                if (opt[i] < '0' || opt[i] > '9')
-                {
-                    s_num.push(tmp);
-                    tmp = 0;
-                }
-            }
-            else           //操作符
-            {
-                if (s_opt.empty() == true || Priority(opt[i]) > Priority(s_opt.top()) ||
-                    (s_opt.top() == '(' && opt[i] != ')'))
-                {
-                    s_opt.push(opt[i]);
-                    i++;
-                    continue;
-                }
-
-                if (s_opt.top() == '(' && opt[i] == ')')
-                {
-                    s_opt.pop();
-                    i++;
-                    continue;
-                }
-
-                if (Priority(opt[i]) <= Priority(s_opt.top()) || (opt[i] == ')' && s_opt.top() != '(') ||
-                    (opt[i] == '\0' && s_opt.empty() != true))
-                {
-                    char ch = s_opt.top();
-                    s_opt.pop();
-                    switch(ch)
-                    {
-                    case '+':
-                        num1 = s_num.top();
-                        s_num.pop();
-                        num2 = s_num.top();
-                        s_num.pop();
-                        s_num.push(num1 + num2);
-                        break;
-                    case '-':
-                        num1 = s_num.top();
-                        s_num.pop();
-                        num2 = s_num.top();
-                        s_num.pop();
-                        s_num.push(num1 - num2);
-                        break;
-                    case '*':
-                        num1 = s_num.top();
-                        s_num.pop();
-                        num2 = s_num.top();
-                        s_num.pop();
-                        s_num.push(num1 * num2);
-                        break;
-                    case '/':
-                        num1 = s_num.top();
-                        s_num.pop();
-                        num2 = s_num.top();
-                        s_num.pop();
-                        s_num.push(num1 / num2);
-                        break;
-                    }
-                }
-            }
-        }
-        ui->lineEdit->setText(QString::number(s_num.top()));//将int类型转换为QString类型
-        exp.clear();
-}
-
 int Widget::Priority(char ch)
 {
         switch(ch)
@@ -251,3 +167,97 @@ int Widget::Priority(char ch)
             return 0;
         }
 }
+//以下是对危险函数strcpy的代替
+void myStrcpy(char* dest, const char* src) {
+        while (*src != '\0') {  // 遍历源字符串
+            *dest = *src;  // 拷贝字符
+            dest++;  // 指针后移
+            src++;
+        }
+        *dest = '\0';  // 加上字符串结束符
+}
+
+void Widget::on_pushButtonequal_clicked()
+{
+        QStack<int> num, op;  //模板类存为int
+
+        char opt[128] = {0};
+        int i = 0, tmp = 0, num1, num2;
+
+        //把QString转换成char *
+        QByteArray ba;
+        ba = exp.toUtf8();   //把QString转换成QByteArray
+        myStrcpy(opt, ba.data());  //data可以把QByteArray转换成const char *
+
+        while (opt[i] != '\0' || op.empty() != 1)
+        {
+            if (opt[i] >= '0' && opt[i] <= '9')
+            {
+                tmp = tmp * 10 + opt[i] - '0';
+                i++;
+                if (opt[i] < '0' || opt[i] > '9')
+                {
+                    num.push(tmp);
+                    tmp = 0;
+                }
+            }
+            else
+            {
+                if (op.empty() == 1 || Priority(opt[i]) > Priority(op.top()) ||
+                    (op.top() == '(' && opt[i] != ')'))
+                {
+                    op.push(opt[i]);
+                    i++;
+                    continue;
+                }
+
+                if (op.top() == '(' && opt[i] == ')')
+                {
+                    op.pop();
+                    i++;
+                    continue;
+                }
+
+                if (Priority(opt[i]) <= Priority(op.top()) || (opt[i] == ')' && op.top() != '(') ||
+                    (opt[i] == '\0' && op.empty() != 1))
+                {
+                    char ch = op.top();
+                    op.pop();
+                    switch(ch)
+                    {
+                    case '+':
+                        num1 = num.top();
+                        num.pop();
+                        num2 = num.top();
+                        num.pop();
+                        num.push(num1 + num2);
+                        break;
+                    case '-':
+                        num1 = num.top();
+                        num.pop();
+                        num2 = num.top();
+                        num.pop();
+                        num.push(num1 - num2);
+                        break;
+                    case '*':
+                        num1 = num.top();
+                        num.pop();
+                        num2 = num.top();
+                        num.pop();
+                        num.push(num1 * num2);
+                        break;
+                    case '/':
+                        num1 = num.top();
+                        num.pop();
+                        num2 = num.top();
+                        num.pop();
+                        num.push(num1 / num2);
+                        break;
+                    }
+                }
+            }
+        }
+        ui->lineEdit->setText(QString::number(num.top()));//将int类型转换为QString类型
+        exp.clear();
+}
+
